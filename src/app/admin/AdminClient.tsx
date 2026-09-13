@@ -27,6 +27,17 @@ function fmt(iso: string) {
   });
 }
 
+// ตอนทุกคนกดพร้อมกัน ระดับวินาทีแยกไม่ออกว่าใครก่อน จึงต่อมิลลิวินาทีไว้ด้วย
+function fmtMs(iso: string) {
+  const ms = String(new Date(iso).getMilliseconds()).padStart(3, "0");
+  return `${fmt(iso)}.${ms}`;
+}
+
+// ครอบ " และ escape " ข้างในตามมาตรฐาน CSV กันชื่อผู้เล่นทำไฟล์เพี้ยน
+function cell(v: string | number) {
+  return `"${String(v).replace(/"/g, '""')}"`;
+}
+
 export default function AdminClient() {
   const supabase = useRef(createClient()).current;
 
@@ -105,9 +116,19 @@ export default function AdminClient() {
   }
 
   async function copyCsv() {
-    const csv =
-      "rank,name,accepted_at\n" +
-      rows.map((r) => `${r.rank},"${r.display_name}",${fmt(r.accepted_at)}`).join("\n");
+    // accepted_at_iso เก็บความละเอียดเต็มจากฐานข้อมูล ใช้ตัดสินตอนมีคนทักท้วง
+    const csv = [
+      "rank,name,invite_label,accepted_at_thai,accepted_at_iso",
+      ...rows.map((r) =>
+        [
+          r.rank,
+          cell(r.display_name),
+          cell(r.invite_label ?? ""),
+          cell(fmtMs(r.accepted_at)),
+          cell(r.accepted_at),
+        ].join(",")
+      ),
+    ].join("\n");
     await navigator.clipboard.writeText(csv);
   }
 
@@ -182,7 +203,7 @@ export default function AdminClient() {
                     <td className="rank">{r.rank}</td>
                     <td>{r.display_name}</td>
                     <td>{r.invite_label ?? "—"}</td>
-                    <td>{fmt(r.accepted_at)}</td>
+                    <td>{fmtMs(r.accepted_at)}</td>
                   </tr>
                 ))}
               </tbody>
