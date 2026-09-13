@@ -269,16 +269,16 @@ export default function AdminClient() {
                   <tr key={i.token}>
                     <td>{i.label ?? "—"}</td>
                     <td className="link">{`${origin}/i/${i.token}`}</td>
-                    <td>{i.revoked ? "ยกเลิกแล้ว" : i.used_by ? `ใช้แล้ว (${i.used_by})` : "ยังไม่ใช้"}</td>
+                    <td>{i.revoked ? "ปิดรับแล้ว" : i.used_by ? `เปิดรับอยู่ · ${i.used_by}` : "เปิดรับอยู่ · ยังไม่มีใครกด"}</td>
                     <td>
-                      {!i.revoked && !i.used_by && (
+                      {!i.revoked && (
                         <button
                           onClick={async () => {
                             await supabase.rpc("admin_revoke_invite", { p_token: i.token });
                             refresh();
                           }}
                         >
-                          ยกเลิก
+                          ปิดรับ
                         </button>
                       )}
                     </td>

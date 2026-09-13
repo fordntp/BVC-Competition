@@ -219,12 +219,12 @@ export default function InviteClient({ token }: { token: string }) {
 
       <div className="body">
         <p className="greeting">
-          สวัสดี{info.invite_label ? ` ${info.invite_label}` : ""},
+          {info.invite_label ? `สวัสดี ${info.invite_label},` : "ถึงผู้เล่นทุกคน"}
         </p>
         <p className="letter">
-          ลิงก์นี้สงวนไว้สำหรับผู้เล่นประจำเพียงคนเดียว
-          ยืนยันตัวตนไว้ก่อนได้เลย แล้วกดรับทันทีที่ประตูเปิด
-          เพราะที่นั่งจัดตามลำดับการกดจริง
+          ลิงก์นี้ใช้ร่วมกันทั้งคลับ ที่นั่งจัดตามลำดับการกดจริง
+          ใครกดก่อนได้ก่อน ล็อกอินรอไว้ตั้งแต่ตอนนี้ได้เลย
+          พอถึงเวลาจะได้เหลือแค่กดปุ่มเดียว
         </p>
         <hr className="rule" />
 
@@ -264,7 +264,7 @@ export default function InviteClient({ token }: { token: string }) {
               เข้าสู่ระบบด้วย Google
             </button>
             <p className="footnote">
-              ล็อกอินไว้ล่วงหน้าก่อนถึงเวลา ตอนประตูเปิดจะได้เหลือแค่กดปุ่มเดียว
+              ล็อกอินไว้ล่วงหน้าก่อนถึงเวลา คนที่มาล็อกอินตอนประตูเปิดจะเสียเปรียบ
             </p>
           </>
         ) : (
