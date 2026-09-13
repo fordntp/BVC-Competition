@@ -115,9 +115,9 @@ export default function AdminClient() {
     setBusy(false);
   }
 
-  async function copyCsv() {
-    // accepted_at_iso เก็บความละเอียดเต็มจากฐานข้อมูล ใช้ตัดสินตอนมีคนทักท้วง
-    const csv = [
+  // accepted_at_iso เก็บความละเอียดเต็มจากฐานข้อมูล ใช้ตัดสินตอนมีคนทักท้วง
+  function buildCsv() {
+    return [
       "rank,name,invite_label,accepted_at_thai,accepted_at_iso",
       ...rows.map((r) =>
         [
@@ -129,7 +129,23 @@ export default function AdminClient() {
         ].join(",")
       ),
     ].join("\n");
-    await navigator.clipboard.writeText(csv);
+  }
+
+  async function copyCsv() {
+    await navigator.clipboard.writeText(buildCsv());
+  }
+
+  function downloadCsv() {
+    // \uFEFF (BOM) ทำให้ Excel บน Windows อ่านภาษาไทยออก ไม่ขึ้นเป็นตัวยึกยือ
+    const blob = new Blob(["\uFEFF" + buildCsv()], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `serving-thank-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   async function copyLinks() {
@@ -188,6 +204,7 @@ export default function AdminClient() {
         <>
           <div className="admin-actions">
             <button className="primary" onClick={refresh}>โหลดใหม่</button>
+            <button onClick={downloadCsv} disabled={!rows.length}>ดาวน์โหลด CSV</button>
             <button onClick={copyCsv} disabled={!rows.length}>คัดลอกเป็น CSV</button>
           </div>
           {rows.length === 0 ? (
