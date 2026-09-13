@@ -7,6 +7,8 @@ import { createClient, COMPETITION_SLUG } from "@/lib/supabase/client";
 type Acceptance = {
   rank: number;
   display_name: string;
+  email: string;
+  dup_count: number;
   accepted_at: string;
   invite_label: string | null;
 };
@@ -118,12 +120,13 @@ export default function AdminClient() {
   // accepted_at_iso เก็บความละเอียดเต็มจากฐานข้อมูล ใช้ตัดสินตอนมีคนทักท้วง
   function buildCsv() {
     return [
-      "rank,name,invite_label,accepted_at_thai,accepted_at_iso",
+      "rank,name,email,same_inbox_count,accepted_at_thai,accepted_at_iso",
       ...rows.map((r) =>
         [
           r.rank,
           cell(r.display_name),
-          cell(r.invite_label ?? ""),
+          cell(r.email),
+          r.dup_count,
           cell(fmtMs(r.accepted_at)),
           cell(r.accepted_at),
         ].join(",")
@@ -212,14 +215,24 @@ export default function AdminClient() {
           ) : (
             <table>
               <thead>
-                <tr><th>#</th><th>ชื่อ</th><th>ส่งให้</th><th>เวลาที่กดรับ</th></tr>
+                <tr><th>#</th><th>ชื่อ</th><th>อีเมล</th><th>เวลาที่กดรับ</th></tr>
               </thead>
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.rank}>
                     <td className="rank">{r.rank}</td>
                     <td>{r.display_name}</td>
-                    <td>{r.invite_label ?? "—"}</td>
+                    <td style={{ fontSize: 13 }}>
+                      {r.email}
+                      {r.dup_count > 1 && (
+                        <span
+                          title="กล่องอีเมลนี้ถูกใช้มากกว่าหนึ่งบัญชี (Gmail ไม่สนจุดและ +ต่อท้าย)"
+                          style={{ color: "#B84226", fontWeight: 600, marginLeft: 6 }}
+                        >
+                          ซ้ำ ×{r.dup_count}
+                        </span>
+                      )}
+                    </td>
                     <td>{fmtMs(r.accepted_at)}</td>
                   </tr>
                 ))}
