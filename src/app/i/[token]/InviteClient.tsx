@@ -66,6 +66,7 @@ export default function InviteClient({ token }: { token: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     const { data: auth } = await supabase.auth.getUser();
@@ -133,6 +134,34 @@ export default function InviteClient({ token }: { token: string }) {
     const row = (Array.isArray(data) ? data[0] : data) as Result;
     setResult(row);
     setSubmitting(false);
+  }
+
+  async function saveImage() {
+    if (!result) return;
+    setSaving(true);
+    setError(null);
+    try {
+      // โหลดโค้ดวาดรูปตอนกดเท่านั้น หน้านี้แข่งกันที่ความเร็วตอนเปิด
+      // ไม่ควรแบกโค้ดที่ได้ใช้หลังจบการแข่งไปด้วยตั้งแต่แรก
+      const { drawRankCard } = await import("@/lib/rankCard");
+      const blob = await drawRankCard({
+        rank: result.rank,
+        name: result.display_name,
+        acceptedAt: result.accepted_at,
+        when: fmt(result.accepted_at),
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `serving-thank-rank-${result.rank}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("สร้างรูปไม่สำเร็จ ลองใหม่อีกครั้ง");
+    }
+    setSaving(false);
   }
 
   if (loading) {
@@ -214,11 +243,21 @@ export default function InviteClient({ token }: { token: string }) {
         </p>
 
         {result ? (
-          <div className="status ok">
-            <span className="rank">#{result.rank}</span>
-            คุณได้ที่นั่งแล้ว ในชื่อ {result.display_name} · เวลา{" "}
-            {fmt(result.accepted_at)}
-          </div>
+          <>
+            <div className="status ok">
+              <span className="rank">#{result.rank}</span>
+              คุณได้ที่นั่งแล้ว ในชื่อ {result.display_name} · เวลา{" "}
+              {fmt(result.accepted_at)}
+            </div>
+            <button
+              className="accept"
+              style={{ marginTop: 16 }}
+              onClick={saveImage}
+              disabled={saving}
+            >
+              {saving ? "กำลังสร้างรูป…" : "บันทึกรูปผลลำดับ"}
+            </button>
+          </>
         ) : !user ? (
           <>
             <button className="accept" onClick={signInWithGoogle}>
