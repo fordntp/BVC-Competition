@@ -58,9 +58,7 @@ export default function InviteClient({ token }: { token: string }) {
   const [info, setInfo] = useState<InviteInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [emailSent, setEmailSent] = useState(false);
 
   const [now, setNow] = useState(Date.now());
   const offsetRef = useRef(0); // เวลาเซิร์ฟเวอร์ - เวลาเครื่อง (ms)
@@ -107,17 +105,16 @@ export default function InviteClient({ token }: { token: string }) {
     return () => clearInterval(t);
   }, []);
 
-  async function sendMagicLink() {
+  async function signInWithGoogle() {
     setError(null);
     const redirect = `${window.location.origin}/auth/callback?next=${encodeURIComponent(
       `/i/${token}`
     )}`;
-    const { error: e } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: redirect },
+    const { error: e } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: redirect },
     });
-    if (e) setError("ส่งอีเมลไม่สำเร็จ ลองตรวจสอบอีเมลอีกครั้ง");
-    else setEmailSent(true);
+    if (e) setError("เข้าสู่ระบบด้วย Google ไม่สำเร็จ ลองใหม่อีกครั้ง");
   }
 
   async function accept() {
@@ -223,36 +220,14 @@ export default function InviteClient({ token }: { token: string }) {
             {fmt(result.accepted_at)}
           </div>
         ) : !user ? (
-          emailSent ? (
-            <div className="status ok">
-              ส่งลิงก์ยืนยันไปที่ {email} แล้ว เปิดอีเมลแล้วกดลิงก์
-              จากนั้นจะกลับมาที่หน้านี้เอง
-            </div>
-          ) : (
-            <>
-              <div className="field">
-                <label htmlFor="email">อีเมลสำหรับยืนยันตัวตน</label>
-                <input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                />
-              </div>
-              <button
-                className="accept"
-                onClick={sendMagicLink}
-                disabled={!email.includes("@")}
-              >
-                ส่งลิงก์ยืนยัน
-              </button>
-              <p className="footnote">
-                ยืนยันไว้ล่วงหน้าก่อนถึงเวลา จะได้ไม่ต้องเปิดอีเมลตอนแข่ง
-              </p>
-            </>
-          )
+          <>
+            <button className="accept" onClick={signInWithGoogle}>
+              เข้าสู่ระบบด้วย Google
+            </button>
+            <p className="footnote">
+              ล็อกอินไว้ล่วงหน้าก่อนถึงเวลา ตอนประตูเปิดจะได้เหลือแค่กดปุ่มเดียว
+            </p>
+          </>
         ) : (
           <>
             <div className="signed-in">

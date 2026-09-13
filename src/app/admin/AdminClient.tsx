@@ -32,8 +32,6 @@ export default function AdminClient() {
 
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [email, setEmail] = useState("");
-  const [emailSent, setEmailSent] = useState(false);
 
   const [tab, setTab] = useState<"ranking" | "invites">("ranking");
   const [rows, setRows] = useState<Acceptance[]>([]);
@@ -80,12 +78,14 @@ export default function AdminClient() {
     return () => clearInterval(t);
   }, [isAdmin, refresh]);
 
-  async function signIn() {
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: `${origin}/auth/callback?next=/admin` },
+  async function signInWithGoogle() {
+    // อ่าน origin จาก window ตรง ๆ กัน state ที่ยังว่างตอนกดเร็ว ๆ
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=/admin`,
+      },
     });
-    if (!error) setEmailSent(true);
   }
 
   async function createInvites() {
@@ -127,23 +127,12 @@ export default function AdminClient() {
     return (
       <div className="admin-wrap">
         <h1>เข้าสู่ระบบแอดมิน</h1>
-        <p className="sub">ใช้อีเมลที่ถูกเพิ่มไว้ในตาราง admins</p>
-        {emailSent ? (
-          <div className="status ok">ส่งลิงก์ยืนยันไปที่ {email} แล้ว</div>
-        ) : (
-          <div className="admin-actions">
-            <input
-              style={{ width: 260 }}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-            />
-            <button className="primary" onClick={signIn} disabled={!email.includes("@")}>
-              ส่งลิงก์ยืนยัน
-            </button>
-          </div>
-        )}
+        <p className="sub">ใช้บัญชี Google ที่อยู่ในรายชื่อแอดมิน</p>
+        <div className="admin-actions">
+          <button className="primary" onClick={signInWithGoogle}>
+            เข้าสู่ระบบด้วย Google
+          </button>
+        </div>
       </div>
     );
   }
@@ -153,7 +142,8 @@ export default function AdminClient() {
       <div className="admin-wrap">
         <h1>บัญชีนี้ยังไม่มีสิทธิ์แอดมิน</h1>
         <p className="sub">
-          เพิ่ม user_id ของ {user.email} ลงในตาราง admins ก่อน แล้วโหลดหน้านี้ใหม่
+          บัญชี {user.email} ไม่ได้อยู่ในรายชื่อแอดมิน ลองเข้าด้วยบัญชีอื่น
+          หรือให้คนที่ดูแลฐานข้อมูลเพิ่มอีเมลนี้ลงตาราง admin_emails
         </p>
       </div>
     );
